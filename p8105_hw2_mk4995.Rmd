@@ -1,0 +1,6 @@
+---
+title: "P8105 Homework 2"
+author: "Maya Krishnamoorthy"
+date: "2024-09-25"
+output: github_document
+---
