@@ -4,3 +4,30 @@ author: "Maya Krishnamoorthy"
 date: "2024-09-25"
 output: github_document
 ---
+
+``` {r setup, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+## Problem 1
+
+This problem focuses on NYC transit data. The dataset `NYC_Transit_Subway_Entrance_and_Exit_Data.csv` contains information related to each entrance and exit for each subway station in NYC.
+
+*Step 1*: Read and clean the data; retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert the entry variable from character (YES vs NO) to a logical variable (the ifelse or case_match function may be useful).
+
+``` {r}
+nyc_transit = 
+  read_csv("data/NYC_Transit_Subway_Entrance_and_Exit_Data.csv") |> 
+  janitor::clean_names() |> 
+  select(line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) |> 
+  mutate(
+    entry = case_match(
+      entry, 
+      "YES" ~ TRUE, 
+      "NO" ~ FALSE)
+  )
+```
+
+*Step 2*: Write a short paragraph about this dataset – explain briefly what variables the dataset contains, describe your data cleaning steps so far, and give the dimension (rows x columns) of the resulting dataset. Are these data tidy?
+
