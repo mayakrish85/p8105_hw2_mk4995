@@ -31,3 +31,5 @@ nyc_transit =
 
 *Step 2*: Write a short paragraph about this dataset – explain briefly what variables the dataset contains, describe your data cleaning steps so far, and give the dimension (rows x columns) of the resulting dataset. Are these data tidy?
 
+``` {r}
+```
