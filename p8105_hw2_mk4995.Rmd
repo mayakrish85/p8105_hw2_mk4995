@@ -98,7 +98,7 @@ nrow(A_train_ADA)
 
 ## Problem 2
 
-Read and clean data!
+Read and clean each sheet from the Trash Wheel Excel sheet!
 
 ``` {r message=FALSE}
 # Read trash data as a function for all the common steps in each sheet
@@ -119,21 +119,68 @@ read_sheet_data = function(sheet_name) {
 mr_trash_wheel = read_sheet_data("Mr. Trash Wheel") |> 
   select(!x15:x16) |> # Remove NA columns
   mutate(
-    sports_balls = as.integer(round(sports_balls)) # Round number of sports balls to the closest integer
+    sports_balls = as.integer(round(sports_balls)), # Round number of sports balls to the closest integer
+    year = as.numeric(year), # convert year to a numeric variable
+    trash_wheel = "Mr. Trash Wheel" # create a new column that tells us which sheet this data represents (for binding later)
   )
 
 # Read Professor Trash Wheel Data
-professor_trash_wheel = read_sheet_data("Professor Trash Wheel")
+professor_trash_wheel = read_sheet_data("Professor Trash Wheel") |> 
+  mutate(trash_wheel = "Professor Trash Wheel") # new column for binding
 
 # Read Gwynnda Trash Wheel Data
-gwynnda_trash_wheel = read_sheet_data("Gwynnda Trash Wheel")
+gwynnda_trash_wheel = read_sheet_data("Gwynnda Trash Wheel") |> 
+  mutate(trash_wheel = "Gwynnda Trash Wheel") # new column for binding
+```
+
+Now combine the 3 datasets into the Mr. Trash Wheel Dataset.
+
+``` {r}
+trash_wheel_df = 
+  bind_rows(mr_trash_wheel, professor_trash_wheel, gwynnda_trash_wheel) |> # bind the tables
+  relocate(trash_wheel) # move the trash_wheel variable to the first column so we can see which trash wheel we are looking at
 ```
 
 ``` {r}
+# Count subset of trash wheel dataset
+n_mr_trash = 
+  trash_wheel_df |> 
+  filter(trash_wheel == "Mr. Trash Wheel") |> 
+  nrow()
 
+n_prof_trash = 
+  trash_wheel_df |> 
+  filter(trash_wheel == "Professor Trash Wheel") |> 
+  nrow()
+
+n_gwynnda_trash = 
+  trash_wheel_df |> 
+  filter(trash_wheel == "Gwynnda Trash Wheel") |> 
+  nrow()
+  
+# GET SUMMARY DATA!  
 ```
 
+Taking a deeper dive into `trash_wheel_df`, we can see that the table overall contains 14 columns and 849 rows. `r n_mr_trash` rows contain data from the `Mr. Trash Wheel` subset, 107 rows describe `r n_prof_trash`, and `r n_gwynnda_trash` rows describe `Gwynnda Trash Wheel.` Key variables include `weight_tons` and `volume_cubic_yards`, as they tell us the overall volume of the trash collected in a day. `plastic_bottles`, `polystyrene` `cigarette_butts`, `glass_bottles`, `plastic_bags`, `wrappers`, and `sports_balls` are helpful in telling us the volume of trash collected that belonged to each of those categories. 
 
+``` {r}
+# Answering specific questions! 
+
+total_prof_trash_weight = # calculate the total trash weight in tons
+  trash_wheel_df |> 
+  filter(trash_wheel == "Professor Trash Wheel") |> 
+  summarise(total_weight = sum(weight_tons, na.rm = TRUE))
+
+total_gwynnda_cigs = # calculae te total number of cigarette butts collected by Gwynnda in June of 2022
+  trash_wheel_df |> 
+  filter(
+    trash_wheel == "Gwynnda Trash Wheel" & 
+      year == 2022 &
+      month == "June") |> 
+  summarise(total_cigarette_buts = sum(cigarette_butts, na.rm = TRUE))
+```
+
+The total weight in tons of the trash collected by Professor Trash Wheel is `r total_prof_trash_weight`. A total of `r total_gwynnda_cigs` cigarette butts was collected by Gwynnda Trash Wheel in June 2022.
 
 
 
