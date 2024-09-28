@@ -98,12 +98,42 @@ nrow(A_train_ADA)
 
 ## Problem 2
 
-Start by reading and cleaning the Mr. Trash Wheel Sheet.
+Read and clean data!
+
+``` {r message=FALSE}
+# Read trash data as a function for all the common steps in each sheet
+read_sheet_data = function(sheet_name) {
+  sheet_data = 
+    read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+               sheet = sheet_name, # for each sheet
+               na = c("NA", ".", ""), # remove NA columns
+               skip = 1 # skip first row because it's a picture
+    ) |> 
+    janitor::clean_names() |>
+    select(!homes_powered) # Remove columns that are not directly related to dumpster data for all sheets
+  
+  return(sheet_data)
+}
+
+# Read Mr. Trash Wheel Data
+mr_trash_wheel = read_sheet_data("Mr. Trash Wheel") |> 
+  select(!x15:x16) |> # Remove NA columns
+  mutate(
+    sports_balls = as.integer(round(sports_balls)) # Round number of sports balls to the closest integer
+  )
+
+# Read Professor Trash Wheel Data
+professor_trash_wheel = read_sheet_data("Professor Trash Wheel")
+
+# Read Gwynnda Trash Wheel Data
+gwynnda_trash_wheel = read_sheet_data("Gwynnda Trash Wheel")
+```
 
 ``` {r}
-mr_trash_wheel = 
-  read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet="Mr. Trash Wheel", skip = 1)
-  
+
 ```
+
+
+
 
 
