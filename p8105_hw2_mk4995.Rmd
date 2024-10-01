@@ -34,7 +34,7 @@ nyc_transit =
 
 The dataset `NYC_Transit_Subway_Entrance_and_Exit_Data.csv` originally contains 32 columns and 1,868 rows. The variables include the line, name, station and entrance location by latitude and longitude, entrance type, ADA compliance, routes served, cross streets, vending availability, and more. The cleaned dataset `nyc_transit` contains a subset of the original dataset (with only 19 columns). `nyc_transit` variables include the line, station name, station latitude and longitude, routes served, entry, vending, entrance type, and ADA compliance. 
 
-To clean the data, I started by cleaning the names, and then selected only the necessary columns as noted above. I then used the mutate function to convert the entry variable from a character type to a boolean type.
+To clean the data, I started by cleaning the names, and then selected only the necessary columns as noted above. I then used the mutate function to convert the entry variable from a character type to a boolean type. These data are not tidy because there is redundancy in the columns (route1:route11).
 
 #### Answer questions about data
 
@@ -171,7 +171,7 @@ total_prof_trash_weight = # calculate the total trash weight in tons
   filter(trash_wheel == "Professor Trash Wheel") |> 
   summarise(total_weight = sum(weight_tons, na.rm = TRUE))
 
-total_gwynnda_cigs = # calculae te total number of cigarette butts collected by Gwynnda in June of 2022
+total_gwynnda_cigs = # calculate total number of cigarette butts collected by Gwynnda in June of 2022
   trash_wheel_df |> 
   filter(
     trash_wheel == "Gwynnda Trash Wheel" & 
@@ -181,6 +181,40 @@ total_gwynnda_cigs = # calculae te total number of cigarette butts collected by 
 ```
 
 The total weight in tons of the trash collected by Professor Trash Wheel is `r total_prof_trash_weight`. A total of `r total_gwynnda_cigs` cigarette butts was collected by Gwynnda Trash Wheel in June 2022.
+
+
+## Problem 3
+
+Create a single, well-organized dataset with the information in the Great British Bake-Off files.
+
+Examine and clean `bakes.csv`, `bakers.csv`, and `results.csv`.
+
+```{r}
+# SHOULD I DROP NA COLUMNS???
+bakers_df = read_csv(
+  "data/gbb_datasets/bakers.csv"
+  ) |> 
+  janitor::clean_names() |> 
+  view()
+
+bakes_df = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A", "NA", ".", "UNKNOWN")) |> 
+  janitor::clean_names() |> 
+  view()
+
+# Bakers_df does not contain episodes column.
+
+results_df = read_csv("data/gbb_datasets/results.csv", skip = 2) |> 
+  janitor::clean_names() |> 
+  view()
+```
+
+Check for completeness and correctness across datasets.
+
+```{r}
+# Using anti-join
+bakers_not_in_results <- anti_join(bakers_df, results_df, by = c("series", "episode", "baker"))
+bakers_not_in_bakes <- anti_join(bakers_df, bakes_df, by = c("series", "episode", "baker"))
+```
 
 
 
