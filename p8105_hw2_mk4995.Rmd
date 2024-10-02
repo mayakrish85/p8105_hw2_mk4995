@@ -63,7 +63,7 @@ prop_vending_entrance =
 There are `r distinct_stations` distinct stations. Out of those, `r ada_compliant` stations are ADA compliant. The proportion of station entrances / exits without vending that allow entrance is `r prop_vending_entrance`.
 
 
-*I'm not describing the output because I would like to put that time towards problems 2 and 3.*
+**I'm not describing the output because I would like to put that time towards problems 2 and 3.**
 ``` {r, message=FALSE}
 # Reformat data so that route number and route name are distinct variables.
 reformatted_nyc_transit = 
@@ -213,7 +213,7 @@ We can see that `bakers.csv` does not contain the `episode` column. After import
 
 ###### Merge the datasets.
 
-*Now start by merging results_df and bakes_df.*
+*Start by merging results_df and bakes_df.*
 
 ```{r}
 # Using anti-join
@@ -261,8 +261,9 @@ The resulting dataset, `gbb_tidy_df` contains the three merged datasets, which I
 
 I'm not sure if this data can still be considered tidy since the names of each baker and their hometown is repeated multiple times. Is there a way to further reorganize and clean the data? Also, can I drop rows based on that column? I think that logic may be correct, but I'm not sure.
 
-*Export the dataset.*
+
 ```{r}
+# Export the dataset.
 write_csv(gbb_tidy_df, "data/gbb_datasets/gbb_tidy_df.csv")
 ```
 
@@ -270,6 +271,7 @@ write_csv(gbb_tidy_df, "data/gbb_datasets/gbb_tidy_df.csv")
 
 ## something's wrong -- what's happening in signature bake???
 ```{r}
+# Where season >= 5 and result == WINNER
 winners_seasons5_10 = 
   gbb_tidy_df |> 
   filter(
@@ -277,12 +279,45 @@ winners_seasons5_10 =
     result == "WINNER"
   )
 
+# Create readable table
 knitr::kable(winners_seasons5_10)
 ```
 
 The technical score of the winners of season 7, 8, and 9 is 2 (not the best overall score), so it's surprising that they won. The other winners were as expected.
 
 ###### Work on `viewers.csv`
+```{r message=FALSE}
+# Clean the data.
+viewers_df = 
+  read_csv("data/gbb_datasets/viewers.csv") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    series_1:series_10,
+    names_to = "series",
+    names_prefix = "series_",
+    values_to = "viewers"
+  ) |> 
+  mutate(series = as.numeric(series)) |> 
+  relocate(series) |> 
+  filter(!is.na(viewers))
 
+# Print readable table.
+knitr::kable(head(viewers_df, 10))
+```
 
+I cleaned the `viewers_df` by using the `janitor` library. Then, I pivoted the table so that there are fewer columns, as it originally split it up for each series. I converted the series column to a double, rather than a character variable. I also reordered the dataset so that series came first, and filtered out all the rows with NA in the viewers column.
 
+###### Calculating average viewership.
+```{r}
+average_viewership_s1 = 
+  viewers_df |> 
+  filter(series == 1) |> 
+  summarise(avg_views_s1 = mean(viewers, na.rm = TRUE))
+
+average_viewership_s5 =
+  viewers_df |> 
+  filter(series == 5) |> 
+  summarise(avg_views_s5 = mean(viewers, na.rm = TRUE))
+```
+
+The average viewership in season 1 is `r average_viewership_s1`. The average viewership in season 5 is `r average_viewership_s5`.
