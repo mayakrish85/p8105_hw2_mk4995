@@ -14,7 +14,7 @@ library(readxl)
 
 This problem focuses on NYC transit data. The dataset `NYC_Transit_Subway_Entrance_and_Exit_Data.csv` contains information related to each entrance and exit for each subway station in NYC.
 
-#### Clean the data
+###### Clean the data.
 ``` {r message=FALSE}
 # Step 1: Read and clean the data: retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert the entry variable from character (YES vs NO) to a logical variable (the ifelse or case_match function may be useful).
 
@@ -30,13 +30,13 @@ nyc_transit =
   )
 ```
 
-#### Dataset Desciption
+###### Dataset Desciption
 
 The dataset `NYC_Transit_Subway_Entrance_and_Exit_Data.csv` originally contains 32 columns and 1,868 rows. The variables include the line, name, station and entrance location by latitude and longitude, entrance type, ADA compliance, routes served, cross streets, vending availability, and more. The cleaned dataset `nyc_transit` contains a subset of the original dataset (with only 19 columns). `nyc_transit` variables include the line, station name, station latitude and longitude, routes served, entry, vending, entrance type, and ADA compliance. 
 
 To clean the data, I started by cleaning the names, and then selected only the necessary columns as noted above. I then used the mutate function to convert the entry variable from a character type to a boolean type. These data are not tidy because there is redundancy in the columns (route1:route11).
 
-#### Answer questions about data
+###### Answer questions about data.
 
 ``` {r message=FALSE}
 # How many distinct stations are there?
@@ -49,6 +49,7 @@ distinct_stations =
 ada_compliant = 
   nyc_transit |> 
   filter(ada==TRUE) |> 
+  distinct(station_name, line) |> 
   nrow()
 
 # What proportion of station entrances / exits without vending allow entrance?
@@ -59,8 +60,10 @@ prop_vending_entrance =
   )
 ```
 
-There are `r distinct_stations` distinct stations. Out of the 1868 subway station entrances/exits in New York, `r ada_compliant` are ADA compliant. The proportion of station entrances / exits without vending that allow entrance is `r prop_vending_entrance`.
+There are `r distinct_stations` distinct stations. Out of those, `r ada_compliant` stations are ADA compliant. The proportion of station entrances / exits without vending that allow entrance is `r prop_vending_entrance`.
 
+
+*I'm not describing the output because I would like to put that time towards problems 2 and 3.*
 ``` {r, message=FALSE}
 # Reformat data so that route number and route name are distinct variables.
 reformatted_nyc_transit = 
@@ -75,13 +78,11 @@ reformatted_nyc_transit =
     values_to = "available_route"
   )
 
-
 # How many distinct stations serve the A train?
 A_train_service = 
   reformatted_nyc_transit |> 
   filter(available_route == "A") |> 
-  distinct(station_name, line) |> 
-  view()
+  distinct(station_name, line)
 
 nrow(A_train_service)
 
@@ -89,8 +90,7 @@ nrow(A_train_service)
 A_train_ADA =
   reformatted_nyc_transit |> 
   filter(ada == TRUE & available_route == "A") |> 
-  distinct(station_name, line) |> 
-  view()
+  distinct(station_name, line)
   
 nrow(A_train_ADA)
 ```
@@ -98,7 +98,7 @@ nrow(A_train_ADA)
 
 ## Problem 2
 
-Read and clean each sheet from the Trash Wheel Excel sheet!
+###### Read and clean each sheet from the Trash Wheel Excel sheet.
 
 ``` {r message=FALSE}
 # Read trash data as a function for all the common steps in each sheet
@@ -106,7 +106,7 @@ read_sheet_data = function(sheet_name) {
   sheet_data = 
     read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
                sheet = sheet_name, # for each sheet
-               na = c("NA", ".", ""), # remove NA columns
+               na = c("NA", ".", ""), # reassign NA columns
                skip = 1 # skip first row because it's a picture
     ) |> 
     janitor::clean_names() |>
@@ -117,7 +117,7 @@ read_sheet_data = function(sheet_name) {
 
 # Read Mr. Trash Wheel Data
 mr_trash_wheel = read_sheet_data("Mr. Trash Wheel") |> 
-  select(!x15:x16) |> # Remove NA columns
+  select(!x15:x16) |> # Remove columns with only NA
   mutate(
     sports_balls = as.integer(round(sports_balls)), # Round number of sports balls to the closest integer
     year = as.numeric(year), # convert year to a numeric variable
@@ -133,7 +133,7 @@ gwynnda_trash_wheel = read_sheet_data("Gwynnda Trash Wheel") |>
   mutate(trash_wheel = "Gwynnda Trash Wheel") # new column for binding
 ```
 
-Now combine the 3 datasets into the Mr. Trash Wheel Dataset.
+###### Merge the datasets.
 
 ``` {r}
 trash_wheel_df = 
@@ -141,8 +141,10 @@ trash_wheel_df =
   relocate(trash_wheel) # move the trash_wheel variable to the first column so we can see which trash wheel we are looking at
 ```
 
+###### Summarize the data and answer some questions.
+
 ``` {r}
-# Count subset of trash wheel dataset
+# Count subset of trash wheel dataset to better describe the data
 n_mr_trash = 
   trash_wheel_df |> 
   filter(trash_wheel == "Mr. Trash Wheel") |> 
@@ -157,8 +159,6 @@ n_gwynnda_trash =
   trash_wheel_df |> 
   filter(trash_wheel == "Gwynnda Trash Wheel") |> 
   nrow()
-  
-# GET SUMMARY DATA!  
 ```
 
 Taking a deeper dive into `trash_wheel_df`, we can see that the table overall contains 14 columns and 849 rows. `r n_mr_trash` rows contain data from the `Mr. Trash Wheel` subset, 107 rows describe `r n_prof_trash`, and `r n_gwynnda_trash` rows describe `Gwynnda Trash Wheel.` Key variables include `weight_tons` and `volume_cubic_yards`, as they tell us the overall volume of the trash collected in a day. `plastic_bottles`, `polystyrene` `cigarette_butts`, `glass_bottles`, `plastic_bags`, `wrappers`, and `sports_balls` are helpful in telling us the volume of trash collected that belonged to each of those categories. 
@@ -166,7 +166,7 @@ Taking a deeper dive into `trash_wheel_df`, we can see that the table overall co
 ``` {r}
 # Answering specific questions! 
 
-total_prof_trash_weight = # calculate the total trash weight in tons
+total_prof_trash_weight = # calculate the total trash weight in tons for Prof Trash Wheel
   trash_wheel_df |> 
   filter(trash_wheel == "Professor Trash Wheel") |> 
   summarise(total_weight = sum(weight_tons, na.rm = TRUE))
@@ -187,34 +187,77 @@ The total weight in tons of the trash collected by Professor Trash Wheel is `r t
 
 Create a single, well-organized dataset with the information in the Great British Bake-Off files.
 
-Examine and clean `bakes.csv`, `bakers.csv`, and `results.csv`.
+###### Examine and clean `bakes.csv`, `bakers.csv`, and `results.csv`.
 
-```{r}
-# SHOULD I DROP NA COLUMNS???
+```{r message=FALSE}
+
 bakers_df = read_csv(
   "data/gbb_datasets/bakers.csv"
   ) |> 
   janitor::clean_names() |> 
-  view()
+  separate(baker_name, into = c("baker_first_name", "baker_last_name"), sep = " ")
 
 bakes_df = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A", "NA", ".", "UNKNOWN")) |> 
   janitor::clean_names() |> 
-  view()
-
-# Bakers_df does not contain episodes column.
+  rename(baker_first_name = baker) |> 
+  mutate(baker_first_name = str_replace_all(baker_first_name, '["\']', ""))
 
 results_df = read_csv("data/gbb_datasets/results.csv", skip = 2) |> 
   janitor::clean_names() |> 
-  view()
+  rename(baker_first_name = baker) |> 
+  mutate(baker_first_name = str_replace_all(baker_first_name, '["\']', ""))
 ```
 
-Check for completeness and correctness across datasets.
+
+We can see that `bakers.csv` does not contain the `episode` column. After importing each dataset, I noticed that the `baker_name` column contained the first and last name of each baker in `bakers_df`, whereas `bakes_df` and `results_df` contained only the first name in the `baker` column. To make the merge process easier, I separated the first and last name columns in `bakers_df`. I also converted thet `baker` column to `baker_first_name` and removed any excess quotations in the names (i.e. "Jo" to Jo).
+
+###### Merge the datasets.
+
+*Now start by merging results_df and bakes_df.*
 
 ```{r}
 # Using anti-join
-bakers_not_in_results <- anti_join(bakers_df, results_df, by = c("series", "episode", "baker"))
-bakers_not_in_bakes <- anti_join(bakers_df, bakes_df, by = c("series", "episode", "baker"))
+anti_join_bakes_results = anti_join(bakes_df, results_df)
+
+# First merge results and bakes using the variables identified in the anti_join.
+bake_results = left_join(
+  bakes_df, 
+  results_df, 
+  by = c("series", "episode", "baker_first_name")
+  )
 ```
 
+I first used `anti_join()` to check what variables to merge `bakes_df` and `results_df`. Then I used a left join to put the datasets together on "series", "episode", and "baker_first_name."
+
+*Merge the resulting dataset with bakers_df.*
+
+```{r}
+# Now find the variables that can join the two datasets.
+anti_join_bakes_results = anti_join(bakers_df, bake_results)
+
+# Merge the dataframes by series and baker_first_name.
+merged_df = left_join(
+  bakers_df,
+  bake_results,
+  by = c("series", "baker_first_name")
+)
+
+# Not sure if this is tidy - redundancy in the names?
+final_tidy_df =
+  merged_df |> 
+  unite(
+    "baker", 
+    baker_first_name, 
+    baker_last_name, 
+    sep = " ", 
+    na.rm = TRUE
+  ) |> 
+  relocate(series, episode, baker) |> 
+  arrange(series, episode)
+```
+
+The resulting dataset, `final_tidy_df` contains the three merged datasets, which I joined on "series" and "baker_first_name." Then, I cleaned the dataset by putting the first and last name columns back together. Lastly, I relocated the columns "series" and "episodes" to the head of the dataset and arranged the dataset in ascending order of series and episodes.
+
+I'm not sure if this data can still be considered tidy since the names of each baker and their hometown is repeated multiple times. Is there a way to further reorganize and clean the data?
 
 
