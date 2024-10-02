@@ -110,7 +110,8 @@ read_sheet_data = function(sheet_name) {
                skip = 1 # skip first row because it's a picture
     ) |> 
     janitor::clean_names() |>
-    select(!homes_powered) # Remove columns that are not directly related to dumpster data for all sheets
+    select(!homes_powered) |> 
+    filter(!is.na(dumpster)) # Remove columns and rows that are not directly related to dumpster data for all sheets
   
   return(sheet_data)
 }
@@ -126,7 +127,8 @@ mr_trash_wheel = read_sheet_data("Mr. Trash Wheel") |>
 
 # Read Professor Trash Wheel Data
 professor_trash_wheel = read_sheet_data("Professor Trash Wheel") |> 
-  mutate(trash_wheel = "Professor Trash Wheel") # new column for binding
+  mutate(trash_wheel = "Professor Trash Wheel") |> # new column for binding
+  filter(dumpster != 119)
 
 # Read Gwynnda Trash Wheel Data
 gwynnda_trash_wheel = read_sheet_data("Gwynnda Trash Wheel") |> 
@@ -182,7 +184,6 @@ total_gwynnda_cigs = # calculate total number of cigarette butts collected by Gw
 
 The total weight in tons of the trash collected by Professor Trash Wheel is `r total_prof_trash_weight`. A total of `r total_gwynnda_cigs` cigarette butts was collected by Gwynnda Trash Wheel in June 2022.
 
-
 ## Problem 3
 
 Create a single, well-organized dataset with the information in the Great British Bake-Off files.
@@ -191,25 +192,25 @@ Create a single, well-organized dataset with the information in the Great Britis
 
 ```{r message=FALSE}
 
-bakers_df = read_csv(
-  "data/gbb_datasets/bakers.csv"
-  ) |> 
+bakers_df = # set up and clean bakers_df from bakers.csv
+  read_csv("data/gbb_datasets/bakers.csv") |> 
   janitor::clean_names() |> 
   separate(baker_name, into = c("baker_first_name", "baker_last_name"), sep = " ")
 
-bakes_df = read_csv("data/gbb_datasets/bakes.csv", na = c("N/A", "NA", ".", "UNKNOWN")) |> 
+bakes_df = # set up bakes_df from bakes.csv
+  read_csv("data/gbb_datasets/bakes.csv", na = c("N/A", "NA", ".", "UNKNOWN")) |> 
   janitor::clean_names() |> 
   rename(baker_first_name = baker) |> 
   mutate(baker_first_name = str_replace_all(baker_first_name, '["\']', ""))
 
-results_df = read_csv("data/gbb_datasets/results.csv", skip = 2) |> 
+results_df = # set up results_df from results.csv
+  read_csv("data/gbb_datasets/results.csv", skip = 2) |> 
   janitor::clean_names() |> 
   rename(baker_first_name = baker) |> 
   mutate(baker_first_name = str_replace_all(baker_first_name, '["\']', ""))
 ```
 
-
-We can see that `bakers.csv` does not contain the `episode` column. After importing each dataset, I noticed that the `baker_name` column contained the first and last name of each baker in `bakers_df`, whereas `bakes_df` and `results_df` contained only the first name in the `baker` column. To make the merge process easier, I separated the first and last name columns in `bakers_df`. I also converted thet `baker` column to `baker_first_name` and removed any excess quotations in the names (i.e. "Jo" to Jo).
+We can see that `bakers.csv` does not contain the `episode` column. After importing each dataset, I noticed that the `baker_name` column contained the first and last name of each baker in `bakers_df`, whereas `bakes_df` and `results_df` contained only the first name in the `baker` column. To make the merge process easier, I separated the first and last name columns in `bakers_df`. I also converted the `baker` column to `baker_first_name` and removed any excess quotations in the names (i.e. "Jo" to Jo).
 
 ###### Merge the datasets.
 
@@ -227,7 +228,7 @@ bake_results = right_join(
   )
 ```
 
-I first used `anti_join()` to check what variables to merge `bakes_df` and `results_df`. Then I used a left join to put the datasets together on "series", "episode", and "baker_first_name."
+I first used `anti_join()` to check what variables to merge `bakes_df` and `results_df`. Then I used a right join to put the datasets together on "series", "episode", and "baker_first_name", because the results_df column contains results from all seasons but the bakes_df has everything from series 1-8.
 
 *Merge the resulting dataset with bakers_df.*
 
@@ -259,7 +260,11 @@ gbb_tidy_df =
 
 The resulting dataset, `gbb_tidy_df` contains the three merged datasets, which I joined on "series" and "baker_first_name." Then, I cleaned the dataset by putting the first and last name columns back together. I also removed rows where the results were not available, a.k.a. the contestant did not reach that round. Lastly, I relocated the columns "series" and "episodes" to the head of the dataset and arranged the dataset in ascending order of series and episodes. The resulting dataset has `r nrow(gbb_tidy_df)` rows and `r ncol(gbb_tidy_df)` columns (variables).
 
-I'm not sure if this data can still be considered tidy since the names of each baker and their hometown is repeated multiple times. Is there a way to further reorganize and clean the data? Also, can I drop rows based on that column? I think that logic may be correct, but I'm not sure.
+###### Comments: my questions and concerns.
+
+I'm not sure if this data can still be considered tidy since the names of each baker and their hometown is repeated multiple times. Is there a way to further reorganize and clean the data? Also, can I drop rows based on the result column? I think that logic may be correct, but I'm not sure.
+
+Another concern I have about the dataset is in the `show_stopper` column, where I cannot figure out how to best separate each baked good when there is more than one. There doesn't seem to be a clear division of goods. How can I best deal with that data?
 
 
 ```{r}
@@ -268,22 +273,21 @@ write_csv(gbb_tidy_df, "data/gbb_datasets/gbb_tidy_df.csv")
 ```
 
 ###### Answer questions.
-
-## something's wrong -- what's happening in signature bake???
 ```{r}
 # Where season >= 5 and result == WINNER
 winners_seasons5_10 = 
   gbb_tidy_df |> 
   filter(
     series >= 5,
-    result == "WINNER"
-  )
+    result %in% c("WINNER", "STAR BAKER")
+  ) |> 
+  select(series, episode, baker, result)
 
 # Create readable table
 knitr::kable(winners_seasons5_10)
 ```
 
-The technical score of the winners of season 7, 8, and 9 is 2 (not the best overall score), so it's surprising that they won. The other winners were as expected.
+Given that Richard Burr was the star baker multiple times in season 5, it's surprising that Nancy Birtwhistle won. In season 10, I was surprised that David Atherton won given that Steph Blackwell won star baker 4 times, as well. Otherwise, even though some series were close, the winners generally make sense (are unsurprising).
 
 ###### Work on `viewers.csv`
 ```{r message=FALSE}
@@ -307,7 +311,7 @@ knitr::kable(head(viewers_df, 10))
 
 I cleaned the `viewers_df` by using the `janitor` library. Then, I pivoted the table so that there are fewer columns, as it originally split it up for each series. I converted the series column to a double, rather than a character variable. I also reordered the dataset so that series came first, and filtered out all the rows with NA in the viewers column.
 
-###### Calculating average viewership.
+###### Calculate average viewership.
 ```{r}
 average_viewership_s1 = 
   viewers_df |> 
