@@ -220,7 +220,7 @@ We can see that `bakers.csv` does not contain the `episode` column. After import
 anti_join_bakes_results = anti_join(bakes_df, results_df)
 
 # First merge results and bakes using the variables identified in the anti_join.
-bake_results = left_join(
+bake_results = right_join(
   bakes_df, 
   results_df, 
   by = c("series", "episode", "baker_first_name")
@@ -236,14 +236,14 @@ I first used `anti_join()` to check what variables to merge `bakes_df` and `resu
 anti_join_bakes_results = anti_join(bakers_df, bake_results)
 
 # Merge the dataframes by series and baker_first_name.
-merged_df = left_join(
+merged_df = right_join(
   bakers_df,
   bake_results,
   by = c("series", "baker_first_name")
 )
 
 # Not sure if this is tidy - redundancy in the names?
-final_tidy_df =
+gbb_tidy_df =
   merged_df |> 
   unite(
     "baker", 
@@ -252,12 +252,37 @@ final_tidy_df =
     sep = " ", 
     na.rm = TRUE
   ) |> 
+  filter(!is.na(result)) |> 
   relocate(series, episode, baker) |> 
   arrange(series, episode)
 ```
 
-The resulting dataset, `final_tidy_df` contains the three merged datasets, which I joined on "series" and "baker_first_name." Then, I cleaned the dataset by putting the first and last name columns back together. Lastly, I relocated the columns "series" and "episodes" to the head of the dataset and arranged the dataset in ascending order of series and episodes.
+The resulting dataset, `gbb_tidy_df` contains the three merged datasets, which I joined on "series" and "baker_first_name." Then, I cleaned the dataset by putting the first and last name columns back together. I also removed rows where the results were not available, a.k.a. the contestant did not reach that round. Lastly, I relocated the columns "series" and "episodes" to the head of the dataset and arranged the dataset in ascending order of series and episodes. The resulting dataset has `r nrow(gbb_tidy_df)` rows and `r ncol(gbb_tidy_df)` columns (variables).
 
-I'm not sure if this data can still be considered tidy since the names of each baker and their hometown is repeated multiple times. Is there a way to further reorganize and clean the data?
+I'm not sure if this data can still be considered tidy since the names of each baker and their hometown is repeated multiple times. Is there a way to further reorganize and clean the data? Also, can I drop rows based on that column? I think that logic may be correct, but I'm not sure.
+
+*Export the dataset.*
+```{r}
+write_csv(gbb_tidy_df, "data/gbb_datasets/gbb_tidy_df.csv")
+```
+
+###### Answer questions.
+
+## something's wrong -- what's happening in signature bake???
+```{r}
+winners_seasons5_10 = 
+  gbb_tidy_df |> 
+  filter(
+    series >= 5,
+    result == "WINNER"
+  )
+
+knitr::kable(winners_seasons5_10)
+```
+
+The technical score of the winners of season 7, 8, and 9 is 2 (not the best overall score), so it's surprising that they won. The other winners were as expected.
+
+###### Work on `viewers.csv`
+
 
 
