@@ -104,7 +104,7 @@ nrow(A_train_ADA)
 # Read trash data as a function for all the common steps in each sheet
 read_sheet_data = function(sheet_name) {
   sheet_data = 
-    read_excel("data/202309 Trash Wheel Collection Data.xlsx", 
+    read_excel("data/202409 Trash Wheel Collection Data.xlsx", 
                sheet = sheet_name, # for each sheet
                na = c("NA", ".", ""), # reassign NA columns
                skip = 1 # skip first row because it's a picture
@@ -161,7 +161,7 @@ n_gwynnda_trash =
   nrow()
 ```
 
-Taking a deeper dive into `trash_wheel_df`, we can see that the table overall contains 14 columns and 849 rows. `r n_mr_trash` rows contain data from the `Mr. Trash Wheel` subset, 107 rows describe `r n_prof_trash`, and `r n_gwynnda_trash` rows describe `Gwynnda Trash Wheel.` Key variables include `weight_tons` and `volume_cubic_yards`, as they tell us the overall volume of the trash collected in a day. `plastic_bottles`, `polystyrene` `cigarette_butts`, `glass_bottles`, `plastic_bags`, `wrappers`, and `sports_balls` are helpful in telling us the volume of trash collected that belonged to each of those categories. 
+Taking a deeper dive into `trash_wheel_df`, we can see that the table overall contains 14 columns and 849 rows. `r n_mr_trash` rows contain data from the `Mr. Trash Wheel` subset, `r n_prof_trash` rows describe `Professor Trash Wheel`, and `r n_gwynnda_trash` rows describe `Gwynnda Trash Wheel.` Key variables include `weight_tons` and `volume_cubic_yards`, as they tell us the overall volume of the trash collected in a day. `plastic_bottles`, `polystyrene` `cigarette_butts`, `glass_bottles`, `plastic_bags`, `wrappers`, and `sports_balls` are helpful in telling us the volume of trash collected that belonged to each of those categories. 
 
 ``` {r}
 # Answering specific questions! 
